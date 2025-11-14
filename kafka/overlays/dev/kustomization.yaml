@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# dev 적용 네임스페이스
+namespace: eden
+
+resources:
+  - ../../base
+
+labels:
+  - pairs:
+      env: dev
+
+patches:
+  - path: patches/patch-storage-gp2.yaml
+  - path: patches/patch-soft-affinity.yaml
+  - path: patches/patch-kafka-config.yaml

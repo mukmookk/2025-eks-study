@@ -1,0 +1,28 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: eden-kafka
+spec:
+  kafka:
+    version: 4.0.0
+    listeners:
+      - name: internal
+        port: 9092
+        type: internal
+        tls: false
+    config:
+      auto.create.topics.enable: "true"
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      unclean.leader.election.enable: "true"
+      log.retention.hours: 24
+      # bytes/segment는 dev overlay에서 패치
+      inter.broker.protocol.version: "4.0"
+      log.message.format.version: "4.0"
+    jvmOptions:
+      "-Xms": "768m"
+      "-Xmx": "1024m"
+
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}

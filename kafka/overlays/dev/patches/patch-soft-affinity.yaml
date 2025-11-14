@@ -1,0 +1,36 @@
+# 노드(Hostname) 기준으로만 Soft anti-affinity 적용
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: eden-controller
+spec:
+  template:
+    pod:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    strimzi.io/cluster: eden-kafka
+                    strimzi.io/name: eden-kafka-kafka
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: eden-broker
+spec:
+  template:
+    pod:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    strimzi.io/cluster: eden-kafka
+                    strimzi.io/name: eden-kafka-kafka

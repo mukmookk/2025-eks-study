@@ -1,0 +1,11 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: eden-broker
+  labels:
+    strimzi.io/cluster: eden-kafka
+spec:
+  replicas: 2
+  roles:
+    - broker
+  # storage, affinity 등은 overlay에서 패치

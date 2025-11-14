@@ -1,0 +1,46 @@
+# # controller PVC 1Gi on gp2
+# apiVersion: kafka.strimzi.io/v1beta2
+# kind: KafkaNodePool
+# metadata:
+#   name: eden-controller
+# spec:
+#   storage:
+#     type: persistent-claim
+#     class: gp2
+#     size: 1Gi
+#     deleteClaim: false
+# ---
+# # broker PVC 1Gi on gp2
+# apiVersion: kafka.strimzi.io/v1beta2
+# kind: KafkaNodePool
+# metadata:
+#   name: eden-broker
+# spec:
+#   storage:
+#     type: persistent-claim
+#     class: gp2
+#     size: 1Gi
+#     deleteClaim: false
+
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: eden-broker
+spec:
+  storage:
+    type: persistent-claim
+    class: gp2
+    size: 1Gi
+    deleteClaim: false
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: eden-controller
+spec:
+  storage:
+    type: persistent-claim
+    class: gp2
+    size: 1Gi
+    deleteClaim: false

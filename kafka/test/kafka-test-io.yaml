@@ -1,0 +1,86 @@
+# 1) 테스트 토픽 생성 (브로커 2대 기준)
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: eden-test-topic
+  namespace: eden
+  labels:
+    strimzi.io/cluster: eden-kafka
+spec:
+  partitions: 3
+  replicas: 2
+  config:
+    cleanup.policy: delete
+    retention.ms: 86400000  # 1일
+
+---
+# 2) Producer + Consumer를 같은 Pod(Deployment)로 실행
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-test-io
+  namespace: eden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-test-io
+  template:
+    metadata:
+      labels:
+        app: kafka-test-io
+    spec:
+      containers:
+        # Producer: 1초마다 메시지 전송
+        - name: producer
+          image: edenhill/kcat:1.7.1
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              set -e
+              BOOTSTRAP=${BOOTSTRAP:-eden-kafka-kafka-bootstrap:9092}
+              TOPIC=${TOPIC:-eden-test-topic}
+              i=0
+              while true; do
+                MSG="{\"ts\":\"$(date -Iseconds)\",\"seq\":$i,\"host\":\"$(hostname)\"}"
+                printf "%s\n" "$MSG" | kcat -b "$BOOTSTRAP" -X auto.offset.reset=earliest -G "$GROUP" "$TOPIC"" -P
+                i=$((i+1))
+                sleep ${INTERVAL:-1}
+              done
+          env:
+            - name: BOOTSTRAP
+              value: eden-kafka-kafka-bootstrap:9092
+            - name: TOPIC
+              value: eden-test-topic
+            - name: INTERVAL
+              value: "1"
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits:   { cpu: "200m", memory: "128Mi" }
+
+        # Consumer: 그룹 컨슈머로 계속 소비 (처음엔 새 그룹 + earliest)
+        - name: consumer
+          image: edenhill/kcat:1.7.1
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              set -e
+              BOOTSTRAP=${BOOTSTRAP:-eden-kafka-kafka-bootstrap:9092}
+              TOPIC=${TOPIC:-eden-test-topic}
+              GROUP=${GROUP:-eden-test-g1}
+              # -G(그룹) 모드에서는 -o beginning 사용 불가 → reset 정책으로 제어
+              exec kcat -b "$BOOTSTRAP" -G "$GROUP" "$TOPIC" \
+                -X auto.offset.reset=earliest
+          env:
+            - name: BOOTSTRAP
+              value: eden-kafka-kafka-bootstrap:9092
+            - name: TOPIC
+              value: eden-test-topic
+            - name: GROUP
+              value: eden-test-g1
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits:   { cpu: "200m", memory: "128Mi" }
+
+# kubectl -n eden logs deploy/kafka-test-io -c producer -f
+# kubectl -n eden logs deploy/kafka-test-io -c consumer -f
